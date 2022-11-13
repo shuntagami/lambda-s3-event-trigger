@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Extract zip file and upload the contents to S3.
+Globals:
+  Function:
+    Timeout: 3
+Parameters:
+  DataBucketName:
+    Type: String
+    Description: S3 bucket where zip files are placed
+    Default: shuntagami-demo-data # chage here
+Resources:
+  DemoDataBucket:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - S3ToS3FunctionPermission
+    Properties:
+      BucketName: !Ref DataBucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt S3ToS3Function.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: .zip
+  S3ToS3FunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref S3ToS3Function
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub "arn:aws:s3:::${DataBucketName}"
+      SourceAccount: !Ref AWS::AccountId
+  S3ToS3FunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: allowLogging
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: getObjects
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::${DataBucketName}/*"
+        - PolicyName: putObjects
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${DataBucketName}/*"
+  S3ToS3Function:
+    Type: AWS::Serverless::Function
+    Description: Respond to S3 Events
+    Properties:
+      Description: Responds to S3 Event - Uploads to S3
+      CodeUri: lambda_s3_to_s3/
+      Handler: app.lambda_handler
+      Runtime: go1.x
+      Timeout: 60
+      Role: !GetAtt S3ToS3FunctionExecutionRole.Arn
+Outputs:
+  MyStacksRegion:
+    Description: "Region where cfn stack is located"
+    Value: !Ref AWS::Region
+  DemoBucket:
+    Description: "S3 bucket where zip files are placed"
+    Value: !Ref DataBucketName

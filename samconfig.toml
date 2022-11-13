@@ -1,0 +1,12 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "lambda-s3-to-s3-demo"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-6mpbpd5efhjh"
+s3_prefix = "lambda-s3-to-s3-demo"
+region = "ap-northeast-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "DataBucketName=\"shuntagami-demo-data\""
+image_repositories = []
