@@ -76,7 +76,7 @@ Resources:
     Description: Respond to S3 Events
     Properties:
       Description: Responds to S3 Event - Uploads to S3
-      CodeUri: lambda_s3_to_s3/
+      CodeUri: lambda_s3_to_s3/cmd/
       Handler: app.lambda_handler
       Runtime: go1.x
       Timeout: 60
