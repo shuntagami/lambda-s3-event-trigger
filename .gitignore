@@ -1,2 +1,6 @@
 packaged.yaml
 .aws-sam/
+bin
+tmp
+.terraform
+terraform.tfstate*
