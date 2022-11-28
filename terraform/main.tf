@@ -30,45 +30,39 @@ resource "aws_iam_role" "lambda" {
   })
 }
 
-resource "aws_iam_role_policy" "lambda" {
-  name = "s3_policy"
-  role = aws_iam_role.lambda.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-        ]
-        Resource = [
-          "arn:aws:s3:::${var.bucket_name}/*",
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-        ]
-        Resource = [
-          "arn:aws:logs:*:*:*",
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-        ]
-        Resource = [
-          "arn:aws:logs:*:*:*",
-        ]
-      },
+data "aws_iam_policy_document" "iam_policy_lambda_for_s3" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
     ]
-  })
+    resources = [
+      "arn:aws:s3:::${var.bucket_name}/*"
+    ]
+  }
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = [
+      "arn:aws:logs:*:*:*"
+    ]
+  }
 }
+
+resource "aws_iam_policy" "iam_policy_lambda_for_s3" {
+  name        = "iam_policy_lambda_for_s3"
+  description = "iam_policy_lamda_for_s3 description"
+
+  policy = data.aws_iam_policy_document.iam_policy_lambda_for_s3.json
+}
+
+resource "aws_iam_role_policy_attachment" "iam_for_lambda_s3" {
+  role       = aws_iam_role.lambda.id
+  policy_arn = aws_iam_policy.iam_policy_lambda_for_s3.arn
+}
+
 
 resource "aws_lambda_function" "lambda_s3_to_s3" {
   filename      = "${path.root}/tmp/lambda_s3_to_s3.zip"
