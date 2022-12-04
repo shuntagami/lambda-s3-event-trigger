@@ -14,14 +14,32 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+// customEvent holds an array of S3EventRecord and Bucket/Key.
+// Bucket and Key can be used when invoke lambda function by Test event(https://docs.aws.amazon.com/lambda/latest/dg/testing-functions.html).
+type customEvent struct {
+	S3EventRecords []events.S3EventRecord `json:"Records"`
+	Bucket         string                 `json:"bucket,omitempty" example:"shuntagami-demo-data"`
+	Key            string                 `json:"key,omitempty" example:"folder1/1.zip"`
+}
+
 // handler is Lambda handler func
-func handler(ctx context.Context, s3Event events.S3Event) {
-	record := s3Event.Records[0]
-	bucket := record.S3.Bucket.Name
-	key, err := url.QueryUnescape(record.S3.Object.Key) // S3 key is URL escaped, so unescaping here
-	if err != nil {
-		log.Fatal(err, "E01")
+func handler(ctx context.Context, event customEvent) {
+	var bucket, key string
+
+	if len(event.S3EventRecords) != 0 {
+		record := event.S3EventRecords[0]
+		bucket = record.S3.Bucket.Name
+		var err error
+		// NOTE: S3 key is URL escaped, so unescaping here
+		if key, err = url.QueryUnescape(record.S3.Object.Key); err != nil {
+			log.Fatal(err, "E01")
+		}
+	} else {
+		// when lambda func invoked by Test event, use the bucket and key specified by Event JSON(in lambda console)
+		bucket, key = event.Bucket, event.Key
 	}
+
+	log.Printf("bucket: %s, key: %s", bucket, key)
 
 	s3Client, err := infrastructure.InitializeS3Client("", "", "")
 	if err != nil {
