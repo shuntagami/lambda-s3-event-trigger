@@ -154,3 +154,38 @@ module "metric_alarms" {
 
   alarm_actions = [module.sns_topic.sns_topic_arn]
 }
+
+resource "aws_iam_role" "chatbot" {
+  name = "slack-aws-chat-bot"
+
+  assume_role_policy = <<-EOS
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "chatbot.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  }
+  EOS
+}
+
+resource "aws_iam_role_policy_attachment" "cluster-AmazonEKSClusterPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
+  role       = aws_iam_role.chatbot.id
+}
+
+resource "awscc_chatbot_slack_channel_configuration" "test" {
+  configuration_name = "aws-chat-bot"
+  iam_role_arn       = aws_iam_role.chatbot.arn
+  slack_channel_id   = "C04E38PQFAP"
+  slack_workspace_id = "T02G89A9P46"
+  guardrail_policies = [
+    "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
+  ]
+  sns_topic_arns = [module.sns_topic.sns_topic_arn]
+}
