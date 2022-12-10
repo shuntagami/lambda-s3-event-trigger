@@ -93,12 +93,15 @@ resource "aws_lambda_permission" "s3_permission_to_trigger_lambda" {
   source_arn    = aws_s3_bucket.shuntagami-demo-data.arn
 }
 
-resource "aws_sns_topic" "this" {
-  name = "sns-for-lambda"
+module "sns_topic" {
+  source  = "terraform-aws-modules/sns/aws"
+  version = "~> 3.0"
+
+  name = "sns-topic-for-lambda"
 }
 
 resource "aws_sns_topic_subscription" "user_updates_sqs_target" {
-  topic_arn = aws_sns_topic.this.arn
+  topic_arn = module.sns_topic.sns_topic_arn
   protocol  = "https"
   endpoint  = "https://global.sns-api.chatbot.amazonaws.com"
 }
@@ -149,5 +152,5 @@ module "metric_alarms" {
     }
   }
 
-  alarm_actions = [aws_sns_topic.this.arn]
+  alarm_actions = [module.sns_topic.sns_topic_arn]
 }
