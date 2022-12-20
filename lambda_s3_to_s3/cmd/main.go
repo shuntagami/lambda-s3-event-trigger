@@ -70,12 +70,14 @@ func handler(ctx context.Context, event customEvent) {
 		if err != nil {
 			log.Fatal(err, "E05")
 		}
-		defer fc.Close()
 
 		content, err := ioutil.ReadAll(fc)
 		if err != nil {
 			log.Fatal(err, "E06")
 		}
+		func() {
+			defer fc.Close()
+		}()
 
 		if err := s3Client.UploadWithBytes(ctx, content, bucket, filepath.Join(strings.TrimSuffix(key, filepath.Ext(key)), file.Name), "image/png"); err != nil {
 			log.Fatal(err, "E07")
