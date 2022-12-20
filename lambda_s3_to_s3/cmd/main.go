@@ -7,6 +7,7 @@ import (
 	"lambda_s3_to_s3/pkg/infrastructure"
 	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -52,6 +53,8 @@ func handler(ctx context.Context, event customEvent) {
 	if err != nil {
 		log.Fatal(err, "E03")
 	}
+
+	defer os.Remove(object.Name())
 
 	// Open the ZIP file
 	zf, err := zip.OpenReader(object.Name())
