@@ -70,3 +70,8 @@ $ aws cloudformation delete-stack --stack-name lambda-s3-to-s3-demo
 ```
 $ terraform destroy
 ```
+
+## License
+
+MIT
+
